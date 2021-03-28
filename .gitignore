@@ -1,0 +1,12 @@
+*
+!/**/
+!*.cs
+!*.csproj
+!DSP_AssemblerUI.sln
+
+!.gitignore
+!README.md
+.NETFramework,Version=v4.8.AssemblyAttributes.cs
+
+bin/
+obj/
