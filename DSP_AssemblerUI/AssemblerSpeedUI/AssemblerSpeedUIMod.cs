@@ -3,6 +3,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -19,6 +20,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
     [BepInPlugin("dsp.assemblerUI.speedMod", "Assembler UI Speed Info Mod", "1.0.0.0")]
     public class AssemblerSpeedUIMod : BaseUnityPlugin
     {
+        #region Main Plugin
         public new static ManualLogSource Logger;
 
         internal void Awake()
@@ -31,8 +33,14 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             Harmony.CreateAndPatchAll(typeof(AssemblerSpeedUIMod));
         }
 
+        [Conditional("DEBUG")]
+        static void DebugLog(string logMessage)
+        {
+            Logger.LogDebug(logMessage);
+        }
+        #endregion
 
-
+        #region Patcher
         internal class ItemSpeedInfoLabel
         {
             public GameObject gameObject;
@@ -134,9 +142,9 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         public static void PositionSpeedLabel(GameObject gameObject, int num, int ofNum)
         {
 
-            Logger.LogDebug($"OgPosition:{gameObject.transform.localPosition}");
+            DebugLog($"OgPosition:{gameObject.transform.localPosition}");
             Vector3 shiftVector = getPosShift(num, ofNum);
-            Logger.LogDebug($"ShiftedBy:{shiftVector}");
+            DebugLog($"ShiftedBy:{shiftVector}");
 
             gameObject.transform.localPosition = ogPos.Value + shiftVector;
         }
@@ -164,7 +172,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         [HarmonyTranspiler, HarmonyPatch(typeof(UIAssemblerWindow), "_OnUpdate")]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            Logger.LogDebug("UiTextTranspiler started!");
+            DebugLog("UiTextTranspiler started!");
             CodeMatcher matcher = new CodeMatcher(instructions);
             //find -->
             //ldloc.s 18
@@ -172,7 +180,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //mul
             //stloc.s 18
             //<-- endFind
-            Logger.LogDebug($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
             matcher.MatchForward(
                 true,
                 new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 18),
@@ -181,7 +189,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 18)
             );
 
-            Logger.LogDebug($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
             matcher.Advance(1); //move from last match to next element
             //insert-->
             //ldloc.s 18
@@ -189,7 +197,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //ldfld int32[] AssemblerComponent::productCounts
             //call update
             //<-- endInsert
-            Logger.LogDebug($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
             matcher.InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldloc_S, (byte)18),
                 new CodeInstruction(OpCodes.Ldloca_S, (byte)0),
@@ -199,5 +207,6 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 
             return matcher.InstructionEnumeration();
         }
+        #endregion
     }
 }
