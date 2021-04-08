@@ -7,8 +7,12 @@
 
  The speed info for both input and output can be disabled, should you prefer not showing one of them. 
  Or both of them - even though I don't understand why you would install this mod in the first place then...
+ 
+ You can also decide whether you want to display the speed with which the device currently creates or consumes resources, 
+ or if you want to display the recipe speed for the device without impact of power and full or empty slots.
 
 
 ## Version History
 - v1.0.0 First Version. Shows Production Speeds below Items.
 - v1.1.0 Updated to also show input consumption speeds. Added configuration to enable/disable input and output speeds separately.
+- v1.2.0 Added a config option to configure whether to always show the full speed of the selected recipe or whether to show the current live speed (affected by power for example)
