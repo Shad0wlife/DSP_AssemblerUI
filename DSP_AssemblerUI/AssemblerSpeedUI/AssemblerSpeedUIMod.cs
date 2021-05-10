@@ -44,6 +44,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             try
             {
                 harmony.PatchAll(typeof(AssemblerSpeedUIMod));
+                harmony.PatchAll(typeof(UiMinerWindowPatch));
             }
             catch(Exception ex)
             {

@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="AssemblerSpeedUI\AssemblerSpeedUIMod.cs" />
     <Compile Include="AssemblerSpeedUI\ModInfo.cs" />
+    <Compile Include="AssemblerSpeedUI\UiMinerWindowPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
