@@ -24,7 +24,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         #region Main Plugin
         internal Harmony harmony;
 
-        public new static ManualLogSource Logger;
+        private static ModLogger _modLogger;
 
         public static ConfigEntry<bool> configEnableOutputSpeeds;
         public static ConfigEntry<bool> configEnableInputSpeeds;
@@ -33,8 +33,9 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         internal void Awake()
         {
             //Adding the Logger
-            Logger = new ManualLogSource("AssemblerSpeedUIMod");
+            var logger = new ManualLogSource(nameof(AssemblerSpeedUIMod));
             BepInEx.Logging.Logger.Sources.Add(Logger);
+            _modLogger = new ModLogger(logger);
 
             configEnableOutputSpeeds = Config.Bind("General", "EnableOutputSpeedInfo", true, "Enables the speed information below the output area in the Assembler Window.");
             configEnableInputSpeeds = Config.Bind("General", "EnableInputSpeedInfo", true, "Enables the speed information above the input area in the Assembler Window.");
@@ -48,8 +49,8 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             }
             catch(Exception ex)
             {
-                ErrorLog(ex.Message);
-                ErrorLog(ex.StackTrace);
+                _modLogger.ErrorLog(ex.Message);
+                _modLogger.ErrorLog(ex.StackTrace);
             }
         }
 
@@ -63,16 +64,6 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             }
         }
 
-        [Conditional("DEBUG")]
-        static void DebugLog(string logMessage)
-        {
-            Logger.LogDebug(logMessage);
-        }
-
-        static void ErrorLog(string logMessage)
-        {
-            Logger.LogError(logMessage);
-        }
         #endregion
 
         #region Patcher
@@ -346,9 +337,9 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //define label we later use for a branching instruction. label location is set separately
             Label noLiveData = codeGen.DefineLabel();
 
-            DebugLog("UiTextTranspiler started!");
+            _modLogger.DebugLog("UiTextTranspiler started!");
             CodeMatcher matcher = new CodeMatcher(instructions);
-            DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            _modLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
 
             //find -->
             //ldc.r4 60
@@ -400,7 +391,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 18)
             );
 
-            DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            _modLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
             matcher.Advance(1); //move from last match to next element
 
             //Create code instruction with target label for Brfalse
