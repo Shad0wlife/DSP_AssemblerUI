@@ -62,6 +62,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         {
             additionalSpeedLabels.UpdateSpeedLabels(baseSpeed, productCounts, requireCounts);
         }
+
+        private static void SetupLabels(UIAssemblerWindow window)
+        {
+            int? productCount = window.factorySystem?.assemblerPool[window.assemblerId].products?.Length;
+            int? inputCount = window.factorySystem?.assemblerPool[window.assemblerId].requires?.Length;
+            additionalSpeedLabels.SetupLabels(productCount, inputCount);
+        }
         
         #endregion
 
@@ -70,13 +77,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         [HarmonyPostfix, HarmonyPatch(typeof(UIAssemblerWindow), "OnAssemblerIdChange")]
         public static void OnAssemblerIdChangePostfix(UIAssemblerWindow __instance)
         {
-            additionalSpeedLabels.SetupLabels(__instance);
+            SetupLabels(__instance);
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(UIAssemblerWindow), "OnRecipePickerReturn")]
         public static void OnRecipePickerReturnPostfix(UIAssemblerWindow __instance)
         {
-            additionalSpeedLabels.SetupLabels(__instance);
+            SetupLabels(__instance);
         }
 
         [HarmonyTranspiler, HarmonyPatch(typeof(UIAssemblerWindow), "_OnUpdate")]

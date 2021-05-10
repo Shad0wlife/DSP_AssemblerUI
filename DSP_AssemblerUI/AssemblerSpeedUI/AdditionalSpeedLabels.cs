@@ -34,13 +34,11 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         /// <summary>
         /// Sets up all currently required and configured labels
         /// </summary>
-        /// <param name="window">The UIAssemblerWindow for which the data shall be set up.</param>
-        public void SetupLabels(UIAssemblerWindow window)
+        public void SetupLabels(int? productCount, int? inputCount)
         {
             //Output
             if (setupOutputLabels)
             {
-                int? productCount = window.factorySystem?.assemblerPool[window.assemblerId].products?.Length;
                 if (productCount.HasValue)
                 {
                     SetupSidedLabels(productCount.Value, false);
@@ -50,7 +48,6 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //Input
             if (setupInputLabels)
             {
-                int? inputCount = window.factorySystem?.assemblerPool[window.assemblerId].requires?.Length;
                 if (inputCount.HasValue)
                 {
                     SetupSidedLabels(inputCount.Value, true);
@@ -230,13 +227,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 
             speedInfos[id].Value.text = speedText;
         }
-
-        /// <summary>
-        /// Update all the labels for the given base speed, as well as inputs and outputs
-        /// </summary>
-        /// <param name="baseSpeed">The base speed (number of recipe runs per minute)</param>
-        /// <param name="productCounts">The array with info how many items of each product are created each run</param>
-        /// <param name="requireCounts">The array with info how many items of each input are consumed each run</param>
+        
         public void UpdateSpeedLabels(float baseSpeed, int[] productCounts, int[] requireCounts)
         {
             //Output
