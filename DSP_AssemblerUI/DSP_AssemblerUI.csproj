@@ -61,6 +61,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblerSpeedUI\AdditionalSpeedLabels.cs" />
     <Compile Include="AssemblerSpeedUI\AssemblerSpeedUIMod.cs" />
     <Compile Include="AssemblerSpeedUI\ItemSpeedInfoLabel.cs" />
     <Compile Include="AssemblerSpeedUI\ModInfo.cs" />
