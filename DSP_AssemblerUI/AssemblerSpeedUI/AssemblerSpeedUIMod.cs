@@ -29,8 +29,8 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         internal void Awake()
         {
             //Adding the Logger
-            var logger = new ManualLogSource(nameof(AssemblerSpeedUIMod));
-            BepInEx.Logging.Logger.Sources.Add(Logger);
+            var logger = new ManualLogSource("AssemblerSpeedUIMod");
+            BepInEx.Logging.Logger.Sources.Add(logger);
             ModLogger = new ModLogger(logger);
 
             configEnableOutputSpeeds = Config.Bind("General", "EnableOutputSpeedInfo", true, "Enables the speed information below the output area in the Assembler Window.");
