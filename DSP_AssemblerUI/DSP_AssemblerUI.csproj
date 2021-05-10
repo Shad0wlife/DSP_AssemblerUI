@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblerSpeedUI\AssemblerSpeedUIMod.cs" />
+    <Compile Include="AssemblerSpeedUI\ItemSpeedInfoLabel.cs" />
     <Compile Include="AssemblerSpeedUI\ModInfo.cs" />
     <Compile Include="AssemblerSpeedUI\ModLogger.cs" />
     <Compile Include="AssemblerSpeedUI\UiMinerWindowPatch.cs" />

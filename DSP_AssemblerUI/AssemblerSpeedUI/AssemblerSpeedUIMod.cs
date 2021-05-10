@@ -60,18 +60,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 
             foreach(KeyValuePair<string, ItemSpeedInfoLabel> pair in speedInfos)
             {
-                Destroy(pair.Value.gameObject);
+                Destroy(pair.Value.GameObject);
             }
         }
 
         #endregion
 
         #region Patcher
-        internal class ItemSpeedInfoLabel
-        {
-            public GameObject gameObject;
-            public Text value;
-        }
 
         internal static Dictionary<string, ItemSpeedInfoLabel> speedInfos = new Dictionary<string, ItemSpeedInfoLabel>();
         internal static int speedInfosOutCount = 0;
@@ -161,14 +156,14 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 if (cnt2 < itemCount)
                 {
                     //If it is a label that should be visible, set it up
-                    speedInfos[matchingKeys[cnt2]].gameObject.SetActive(true);
-                    speedInfos[matchingKeys[cnt2]].value.text = "  0.0" + perMinuteString;
                     PositionSpeedLabel(speedInfos[matchingKeys[cnt2]].gameObject, cnt2, loopCap, isInput);
+                    speedInfos[matchingKeys[cnt2]].GameObject.SetActive(true);
+                    speedInfos[matchingKeys[cnt2]].Value.text = "  0.0" + perMinuteString;
                 }
                 else
                 {
                     //If the label exists, but the current assembler doesn't use it, set it to inactive
-                    speedInfos[matchingKeys[cnt2]].gameObject.SetActive(false);
+                    speedInfos[matchingKeys[cnt2]].GameObject.SetActive(false);
                 }
             }
         }
@@ -296,7 +291,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 speedText += $" ({value / 60:0.0}/s)";
             }
 
-            speedInfos[id].value.text = speedText;
+            speedInfos[id].Value.text = speedText;
         }
 
         /// <summary>
