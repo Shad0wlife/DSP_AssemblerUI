@@ -24,7 +24,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         #region Main Plugin
         internal Harmony harmony;
 
-        private static ModLogger _modLogger;
+        internal static ModLogger ModLogger;
 
         public static ConfigEntry<bool> configEnableOutputSpeeds;
         public static ConfigEntry<bool> configEnableInputSpeeds;
@@ -35,7 +35,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //Adding the Logger
             var logger = new ManualLogSource(nameof(AssemblerSpeedUIMod));
             BepInEx.Logging.Logger.Sources.Add(Logger);
-            _modLogger = new ModLogger(logger);
+            ModLogger = new ModLogger(logger);
 
             configEnableOutputSpeeds = Config.Bind("General", "EnableOutputSpeedInfo", true, "Enables the speed information below the output area in the Assembler Window.");
             configEnableInputSpeeds = Config.Bind("General", "EnableInputSpeedInfo", true, "Enables the speed information above the input area in the Assembler Window.");
@@ -49,8 +49,8 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             }
             catch(Exception ex)
             {
-                _modLogger.ErrorLog(ex.Message);
-                _modLogger.ErrorLog(ex.StackTrace);
+                ModLogger.ErrorLog(ex.Message);
+                ModLogger.ErrorLog(ex.StackTrace);
             }
         }
 
@@ -156,7 +156,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 if (cnt2 < itemCount)
                 {
                     //If it is a label that should be visible, set it up
-                    PositionSpeedLabel(speedInfos[matchingKeys[cnt2]].gameObject, cnt2, loopCap, isInput);
+                    PositionSpeedLabel(speedInfos[matchingKeys[cnt2]].GameObject, cnt2, loopCap, isInput);
                     speedInfos[matchingKeys[cnt2]].GameObject.SetActive(true);
                     speedInfos[matchingKeys[cnt2]].Value.text = "  0.0" + perMinuteString;
                 }
@@ -212,8 +212,8 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 
             ItemSpeedInfoLabel newItemSpeedInfo = new ItemSpeedInfoLabel()
             {
-                gameObject = gameObject,
-                value = value
+                GameObject = gameObject,
+                Value = value
             };
             speedInfos.Add(id, newItemSpeedInfo);
         }
@@ -228,9 +228,9 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         public static void PositionSpeedLabel(GameObject gameObject, int num, int ofNum, bool input)
         {
 
-            DebugLog($"OgPosition:{gameObject.transform.localPosition}");
+            ModLogger.DebugLog($"OgPosition:{gameObject.transform.localPosition}");
             Vector3 shiftVector = getPosShift(num, ofNum, input);
-            DebugLog($"ShiftedBy:{shiftVector}");
+            ModLogger.DebugLog($"ShiftedBy:{shiftVector}");
 
             gameObject.transform.localPosition = vanillaSpeedPos.Value + shiftVector;
         }
@@ -332,9 +332,9 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //define label we later use for a branching instruction. label location is set separately
             Label noLiveData = codeGen.DefineLabel();
 
-            _modLogger.DebugLog("UiTextTranspiler started!");
+            ModLogger.DebugLog("UiTextTranspiler started!");
             CodeMatcher matcher = new CodeMatcher(instructions);
-            _modLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            ModLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
 
             //find -->
             //ldc.r4 60
@@ -386,7 +386,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 18)
             );
 
-            _modLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            ModLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
             matcher.Advance(1); //move from last match to next element
 
             //Create code instruction with target label for Brfalse

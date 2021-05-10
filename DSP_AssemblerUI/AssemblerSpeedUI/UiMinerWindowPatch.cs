@@ -9,11 +9,6 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 {
     public class UiMinerWindowPatch
     {
-        private static void LogDebug(string message)
-        {
-            AssemblerSpeedUIMod.Logger.LogDebug(message);
-        }
-
         [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
         public static void _OnUpdatePostfix(UIMinerWindow __instance)
         {
