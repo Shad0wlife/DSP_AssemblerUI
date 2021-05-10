@@ -305,10 +305,17 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         /// </summary>
         /// <param name="id">The Dict-ID of the label to update</param>
         /// <param name="value">The value which to write in the label</param>
-        public static void UpdateSpeedLabel(string id, float value)
+        /// <param name="input"></param>
+        public static void UpdateSpeedLabel(string id, float value, bool input)
         {
-            string perMinuteString = "每分钟".Translate();
-            speedInfos[id].value.text = value.ToString("0.0").PadLeft(5) + perMinuteString;
+            var perMinuteString = "每分钟".Translate();
+            var speedText = value.ToString("0.0").PadLeft(5) + perMinuteString;
+            if (!input)
+            {
+                speedText += $" ({value / 60:0.0}/s)";
+            }
+
+            speedInfos[id].value.text = speedText;
         }
 
         /// <summary>
@@ -324,7 +331,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             {
                 for (int cnt = 0; cnt < Math.Min(productCounts.Length, itemOutputKeys.Length); cnt++)
                 {
-                    UpdateSpeedLabel(itemOutputKeys[cnt], productCounts[cnt] * baseSpeed);
+                    UpdateSpeedLabel(itemOutputKeys[cnt], productCounts[cnt] * baseSpeed, false);
                 }
             }
 
@@ -333,7 +340,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             {
                 for (int cnt = 0; cnt < Math.Min(requireCounts.Length, itemInputKeys.Length); cnt++)
                 {
-                    UpdateSpeedLabel(itemInputKeys[cnt], requireCounts[cnt] * baseSpeed);
+                    UpdateSpeedLabel(itemInputKeys[cnt], requireCounts[cnt] * baseSpeed, true);
                 }
             }
         }
