@@ -8,7 +8,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 {
     public class AdditionalSpeedLabels
     {
-        private static readonly string SpeedTextPath = "UI Root/Overlay Canvas/In Game/Windows/Assembler Window/produce/speed/speed-text";
+        private readonly string speedTextPath;
         private const string OutputKeyBase = "assembler-speed-out-item";
         private const string InputKeyBase = "assembler-speed-in-item";
         
@@ -24,11 +24,12 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         private bool setupOutputLabels;
         private bool setupInputLabels;
         
-        public AdditionalSpeedLabels(ModLogger modLogger, bool setupOutputLabels, bool setupInputLabels)
+        public AdditionalSpeedLabels(ModLogger modLogger, bool setupOutputLabels, bool setupInputLabels, string speedTextPath)
         {
             this.modLogger = modLogger;
             this.setupOutputLabels = setupOutputLabels;
             this.setupInputLabels = setupInputLabels;
+            this.speedTextPath = speedTextPath;
         }
 
         /// <summary>
@@ -111,7 +112,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         /// <param name="input">Whether the label is on the input or output side.</param>
         public void AddSpeedLabel(string id, int num, int ofNum, bool input)
         {
-            var originalDetailLabel = GameObject.Find(SpeedTextPath);
+            var originalDetailLabel = GameObject.Find(speedTextPath);
             if (originalDetailLabel == null)
             {
                 throw new InvalidOperationException("Assembler speed base entry is not present");

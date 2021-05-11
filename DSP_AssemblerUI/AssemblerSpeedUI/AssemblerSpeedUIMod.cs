@@ -37,7 +37,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             configEnableInputSpeeds = Config.Bind("General", "EnableInputSpeedInfo", true, "Enables the speed information above the input area in the Assembler Window.");
             configShowLiveSpeed = Config.Bind("General", "ShowLiveSpeedInfo", true, "True: shows current speed of production building. False: shows regular recipe speed of production building.");
 
-            additionalSpeedLabels = new AdditionalSpeedLabels(ModLogger, configEnableOutputSpeeds.Value, configEnableInputSpeeds.Value);
+            additionalSpeedLabels = new AdditionalSpeedLabels(ModLogger, configEnableOutputSpeeds.Value, configEnableInputSpeeds.Value, Constants.AssemblerWindowSpeedTextPath);
             harmony = new Harmony(ModInfo.ModID);
             try
             {
