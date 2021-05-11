@@ -1,4 +1,7 @@
-﻿using System.Security;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
+using System.Security;
 using System.Security.Permissions;
 using HarmonyLib;
 
@@ -16,33 +19,41 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             additionalSpeedLabels.SetupLabels(1, null);
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
-        public static void _OnUpdatePostfix(UIMinerWindow __instance)
+        [HarmonyTranspiler, HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator codeGen)
         {
-            if (__instance == null || __instance.minerId == 0 || __instance.factory == null || __instance.factorySystem == null)
-            {
-                var method = AccessTools.Method(typeof(UIMinerWindow), "_Close");
-                method.Invoke(__instance, new object[0]);
-                return;
-            }
+            var matcher = new CodeMatcher(instructions);
 
-            var minerComponent = __instance.factorySystem.minerPool[__instance.minerId];
-            if (minerComponent.id != __instance.minerId)
-            {
-                var method = AccessTools.Method(typeof(UIMinerWindow), "_Close");
-                method.Invoke(__instance, new object[0]);
-                return;
-            }
+            matcher.MatchForward(false, 
+                                 new CodeMatch(i => i.opcode == OpCodes.Ldloca_S && i.operand is LocalBuilder lb && lb.LocalIndex == 0),
+                                 new CodeMatch(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("type")),
+                                 new CodeMatch(OpCodes.Ldc_I4_2),
+                                 new CodeMatch(instruction => instruction.opcode == OpCodes.Bne_Un),
+                                 new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 21),
+                                 new CodeMatch(i => i.opcode == OpCodes.Ldloca_S && i.operand is LocalBuilder lb && lb.LocalIndex == 0),
+                                 new CodeMatch(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("veinCount"))
+                );
 
-            var speed = CalcSpeed(__instance, minerComponent);
-            additionalSpeedLabels.UpdateSpeedLabel($"assembler-speed-out-item0", speed, false);
+            matcher.Advance(-1);
+            AssemblerSpeedUIMod.ModLogger.DebugLog($"{nameof(UiMinerWindowPatch)} Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldloc, (byte) 2), 
+                new CodeInstruction(OpCodes.Ldloc, (byte) 0), 
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(UiMinerWindowPatch), nameof(UpdateSpeedLabel)))
+                );
+            
+            return matcher.Instructions();
         }
 
-        private static float CalcSpeed(UIMinerWindow __instance, MinerComponent minerComponent)
+        private static void UpdateSpeedLabel(VeinData[] veinPool, MinerComponent minerComponent)
         {
-            var veinPool = __instance.factory.veinPool;
-            var veinIndex = minerComponent.veinCount != 0 ? minerComponent.veins[minerComponent.currentVeinIndex] : 0;
-
+            var speed = CalcSpeed(veinPool, minerComponent);
+            additionalSpeedLabels.UpdateSpeedLabel($"assembler-speed-out-item0", speed, false);
+        }
+        
+        private static float CalcSpeed(VeinData[] veinPool, MinerComponent minerComponent)
+        {
             var periodSec = (float)(minerComponent.period / 600000.0);
             var periodMin = 60f / periodSec;
             //LogDebug($"s: {minerComponent.speed}, sc: {GameMain.history.miningSpeedScale}, vc: {minerComponent.veinCount}, p: {minerComponent.period} ({periodSec}, {periodMin})");
@@ -53,6 +64,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             }
             else if (minerComponent.type == EMinerType.Oil)
             {
+                var veinIndex = minerComponent.veinCount != 0 ? minerComponent.veins[minerComponent.currentVeinIndex] : 0;
                 speed *= (float) (veinPool[veinIndex].amount * (double) VeinData.oilSpeedMultiplier);
             }
 
