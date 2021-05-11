@@ -10,22 +10,10 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
     {
         internal static AdditionalSpeedLabels additionalSpeedLabels;
 
-        private static void SetupLabels(UIMinerWindow window)
-        {
-            AssemblerSpeedUIMod.ModLogger.DebugLog("Setup miner label");
-            additionalSpeedLabels.SetupLabels(1, null);
-        }
-
         [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "OnMinerIdChange")]
-        public static void OnMinerIdChangePostfix(UIMinerWindow __instance)
+        public static void OnMinerIdChangePostfix()
         {
-            SetupLabels(__instance);
-        }
-
-        [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "_OnOpen")]
-        public static void _OnOpenPostfix(UIMinerWindow __instance)
-        {
-            SetupLabels(__instance);
+            additionalSpeedLabels.SetupLabels(1, null);
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
