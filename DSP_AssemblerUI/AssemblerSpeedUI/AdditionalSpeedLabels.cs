@@ -140,7 +140,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             gameObject.transform.right = originalDetailLabel.transform.right;
 
             //Input area is smaller, decrease font size
-            if (input)
+            if (input || ofNum > 1)
             {
                 value.fontSize -= 2;
             }
