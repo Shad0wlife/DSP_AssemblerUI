@@ -38,6 +38,8 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             configShowLiveSpeed = Config.Bind("General", "ShowLiveSpeedInfo", true, "True: shows current speed of production building. False: shows regular recipe speed of production building.");
 
             additionalSpeedLabels = new AdditionalSpeedLabels(ModLogger, configEnableOutputSpeeds.Value, configEnableInputSpeeds.Value, Constants.AssemblerWindowSpeedTextPath);
+            UiMinerWindowPatch.additionalSpeedLabels = new AdditionalSpeedLabels(ModLogger, configEnableOutputSpeeds.Value, false, Constants.MinerWindowSpeedTextPath);
+
             harmony = new Harmony(ModInfo.ModID);
             try
             {

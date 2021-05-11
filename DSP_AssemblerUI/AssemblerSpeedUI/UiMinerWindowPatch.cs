@@ -1,7 +1,6 @@
 ﻿using System.Security;
 using System.Security.Permissions;
 using HarmonyLib;
-using UnityEngine.UI;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -9,6 +8,26 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 {
     public class UiMinerWindowPatch
     {
+        internal static AdditionalSpeedLabels additionalSpeedLabels;
+
+        private static void SetupLabels(UIMinerWindow window)
+        {
+            AssemblerSpeedUIMod.ModLogger.DebugLog("Setup miner label");
+            additionalSpeedLabels.SetupLabels(1, null);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "OnMinerIdChange")]
+        public static void OnMinerIdChangePostfix(UIMinerWindow __instance)
+        {
+            SetupLabels(__instance);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "_OnOpen")]
+        public static void _OnOpenPostfix(UIMinerWindow __instance)
+        {
+            SetupLabels(__instance);
+        }
+
         [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
         public static void _OnUpdatePostfix(UIMinerWindow __instance)
         {
@@ -27,15 +46,8 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 return;
             }
 
-            if (minerComponent.type == EMinerType.Oil)
-            {
-                return;
-            }
-
             var speed = CalcSpeed(__instance, minerComponent);
-
-            var speedText = AccessTools.Field(typeof(UIMinerWindow), "speedText").GetValue(__instance) as Text;
-            UpdateLabel(speedText, speed);
+            additionalSpeedLabels.UpdateSpeedLabel($"assembler-speed-out-item0", speed, false);
         }
 
         private static float CalcSpeed(UIMinerWindow __instance, MinerComponent minerComponent)
@@ -57,13 +69,6 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             }
 
             return speed;
-        }
-
-        private static void UpdateLabel(Text label, float value)
-        {
-            var labelValue = value.ToString("0.0") + "每分钟".Translate();
-            labelValue += $" ({value / 60}/s)";
-            label.text = labelValue;
         }
     }
 }
