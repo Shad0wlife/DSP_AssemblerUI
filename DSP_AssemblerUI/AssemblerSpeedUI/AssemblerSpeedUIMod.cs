@@ -8,8 +8,6 @@ using System.Reflection.Emit;
 using System.Security;
 using System.Security.Permissions;
 
-[module: UnverifiableCode]
-[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 namespace DSP_AssemblerUI.AssemblerSpeedUI
 {
     [BepInPlugin(ModInfo.ModID, ModInfo.ModName, ModInfo.VersionString)]
