@@ -35,8 +35,8 @@
     <Reference Include="0Harmony">
       <HintPath>..\Libs\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp.refstub">
-      <HintPath>..\Libs\Assembly-CSharp.refstub.dll</HintPath>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\Libs\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
       <HintPath>..\Libs\BepInEx.dll</HintPath>
@@ -53,15 +53,21 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\Libs\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.refstub">
-      <HintPath>..\Libs\UnityEngine.refstub.dll</HintPath>
+    <Reference Include="UnityEngine">
+      <HintPath>..\Libs\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\Libs\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblerSpeedUI\AdditionalSpeedLabels.cs" />
     <Compile Include="AssemblerSpeedUI\AssemblerSpeedUIMod.cs" />
+    <Compile Include="AssemblerSpeedUI\Constants.cs" />
+    <Compile Include="AssemblerSpeedUI\ItemSpeedInfoLabel.cs" />
+    <Compile Include="AssemblerSpeedUI\ModInfo.cs" />
+    <Compile Include="AssemblerSpeedUI\ModLogger.cs" />
+    <Compile Include="AssemblerSpeedUI\UiMinerWindowPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
