@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31005.135
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSP_AssemblerUI", "DSP_AssemblerUI\DSP_AssemblerUI.csproj", "{7EDE0BA0-773B-43C0-8F28-A448A54DCA31}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSP_AssemblerUI", "DSP_AssemblerUI\DSP_AssemblerUI.csproj", "{B7B0AF26-F914-457F-BBA0-27525B8F290A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7EDE0BA0-773B-43C0-8F28-A448A54DCA31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7EDE0BA0-773B-43C0-8F28-A448A54DCA31}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7EDE0BA0-773B-43C0-8F28-A448A54DCA31}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7EDE0BA0-773B-43C0-8F28-A448A54DCA31}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7B0AF26-F914-457F-BBA0-27525B8F290A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7B0AF26-F914-457F-BBA0-27525B8F290A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7B0AF26-F914-457F-BBA0-27525B8F290A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7B0AF26-F914-457F-BBA0-27525B8F290A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
