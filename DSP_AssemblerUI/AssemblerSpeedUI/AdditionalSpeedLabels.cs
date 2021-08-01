@@ -217,13 +217,18 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         /// <param name="id">The Dict-ID of the label to update</param>
         /// <param name="value">The value which to write in the label</param>
         /// <param name="input"></param>
-        public void UpdateSpeedLabel(string id, float value, bool input)
+        public void UpdateSpeedLabel(string id, float value, bool perSecond)
         {
-            var perMinuteString = "每分钟".Translate();
-            var speedText = value.ToString("0.0").PadLeft(5) + perMinuteString;
-            if (!input)
+            string perMinuteString = "每分钟".Translate();
+            string perSecondString = "/s";
+            string speedText;
+            if (perSecond)
             {
-                speedText += $" ({value / 60:0.0}/s)";
+                speedText = (value/60f).ToString("0.0").PadLeft(5) + perSecondString;
+            }
+            else
+            {
+                speedText = value.ToString("0.0").PadLeft(5) + perMinuteString;
             }
 
             speedInfos[id].Value.text = speedText;
@@ -231,12 +236,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         
         public void UpdateSpeedLabels(float baseSpeed, int[] productCounts, int[] requireCounts)
         {
+
             //Output
             if (setupOutputLabels)
             {
                 for (int cnt = 0; cnt < Math.Min(productCounts.Length, ItemOutputKeys.Length); cnt++)
                 {
-                    UpdateSpeedLabel(ItemOutputKeys[cnt], productCounts[cnt] * baseSpeed, false);
+                    UpdateSpeedLabel(ItemOutputKeys[cnt], productCounts[cnt] * baseSpeed, AssemblerSpeedUIMod.configOutputSpeedsPerSecond.Value);
                 }
             }
 
@@ -245,7 +251,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             {
                 for (int cnt = 0; cnt < Math.Min(requireCounts.Length, ItemInputKeys.Length); cnt++)
                 {
-                    UpdateSpeedLabel(ItemInputKeys[cnt], requireCounts[cnt] * baseSpeed, true);
+                    UpdateSpeedLabel(ItemInputKeys[cnt], requireCounts[cnt] * baseSpeed, AssemblerSpeedUIMod.configInputSpeedsPerSecond.Value);
                 }
             }
         }

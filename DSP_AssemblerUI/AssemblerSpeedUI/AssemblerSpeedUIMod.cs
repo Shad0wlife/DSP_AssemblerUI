@@ -5,8 +5,6 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
-using System.Security;
-using System.Security.Permissions;
 
 namespace DSP_AssemblerUI.AssemblerSpeedUI
 {
@@ -20,7 +18,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 
         public static ConfigEntry<bool> configEnableOutputSpeeds;
         public static ConfigEntry<bool> configEnableInputSpeeds;
+        public static ConfigEntry<bool> configInputSpeedsPerSecond;
+        public static ConfigEntry<bool> configOutputSpeedsPerSecond;
         public static ConfigEntry<bool> configShowLiveSpeed;
+
+        public static ConfigEntry<bool> configShowMinerSpeed;
+        public static ConfigEntry<bool> configShowMinerLiveSpeed;
+        public static ConfigEntry<bool> configMinerSpeedsPerSecond;
 
         private static AdditionalSpeedLabels additionalSpeedLabels;
         
@@ -33,15 +37,26 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 
             configEnableOutputSpeeds = Config.Bind("General", "EnableOutputSpeedInfo", true, "Enables the speed information below the output area in the Assembler Window.");
             configEnableInputSpeeds = Config.Bind("General", "EnableInputSpeedInfo", true, "Enables the speed information above the input area in the Assembler Window.");
-            configShowLiveSpeed = Config.Bind("General", "ShowLiveSpeedInfo", true, "True: shows current speed of production building. False: shows regular recipe speed of production building.");
+
+            configOutputSpeedsPerSecond = Config.Bind("General", "EnableOutputSpeedInfoPerSecond", false, "Sets the output speeds shown in Assemblers to items/s (default: items/min).");
+            configInputSpeedsPerSecond = Config.Bind("General", "EnableInputSpeedInfoPerSecond", false, "Sets the input speeds shown in Assemblers to items/s (default: items/min).");
+
+            configShowLiveSpeed = Config.Bind("General", "ShowLiveSpeedInfo", false, "True: shows current speed of production building. False: shows regular recipe speed of production building.");
+
+            configShowMinerSpeed = Config.Bind("Miner", "EnableMinerSpeedInfo", true, "Enables the speed information below the output area in the Miner Window.");
+            configShowMinerLiveSpeed = Config.Bind("Miner", "ShowMinerLiveSpeedInfo", false, "True: shows current speed of production building. False: shows regular recipe speed of production building.");
+            configMinerSpeedsPerSecond = Config.Bind("Miner", "EnableMinerOutputSpeedInfoPerSecond", false, "Sets the output speeds shown in Miners to items/s (default: items/min).");
 
             additionalSpeedLabels = new AdditionalSpeedLabels(ModLogger, configEnableOutputSpeeds.Value, configEnableInputSpeeds.Value, Constants.AssemblerWindowSpeedTextPath);
-            UiMinerWindowPatch.additionalSpeedLabels = new AdditionalSpeedLabels(ModLogger, configEnableOutputSpeeds.Value, false, Constants.MinerWindowSpeedTextPath);
+            UiMinerWindowPatch.additionalSpeedLabels = new AdditionalSpeedLabels(ModLogger, configShowMinerSpeed.Value, false, Constants.MinerWindowSpeedTextPath);
 
             harmony = new Harmony(ModInfo.ModID);
             try
             {
+                ModLogger.DebugLog("Patching AssemblerUI");
                 harmony.PatchAll(typeof(AssemblerSpeedUIMod));
+
+                ModLogger.DebugLog("Patching MinerUI");
                 harmony.PatchAll(typeof(UiMinerWindowPatch));
             }
             catch(Exception ex)
@@ -102,16 +117,16 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
 
             //find -->
             //ldc.r4 60
-            //ldloc.s 17
+            //ldloc.s 6
             //div
-            //stloc.s 18
+            //stloc.s 7
             //<-- endFind
             matcher.MatchForward(
                 true,
                 new CodeMatch(i => i.opcode == OpCodes.Ldc_R4 && i.OperandIs(60f)),
-                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 17),
+                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 6),
                 new CodeMatch(OpCodes.Div),
-                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 18)
+                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 7)
             );
             matcher.Advance(1); //move from last match to next element
 
@@ -125,9 +140,11 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //mul
             //stloc baseSpeedValue
             //<-- endInsert
+            //This is the speed calculation also done in 0.0001 * assemblerComponent.speed * num [num is power], but without num
+            //Whole calculation is done in float to avoid extra casting back from double to float at the end. Imprecision is too small to matter here
             matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldloc_S, (byte)18), //Load base speed without power
-                new CodeInstruction(OpCodes.Ldloca_S, (byte)0),
+                new CodeInstruction(OpCodes.Ldloc_S, (byte)7), //Load base speed without power
+                new CodeInstruction(OpCodes.Ldloc_0),
                 new CodeInstruction(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("speed")), 
                 new CodeInstruction(OpCodes.Conv_R4),
                 new CodeInstruction(OpCodes.Ldc_R4, 0.0001f), 
@@ -137,17 +154,18 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             );
 
             //find -->
-            //ldloc.s 18
-            //ldloc.s 19
+            //ldloc.s 7
+            //ldloc.s 8
             //mul
-            //stloc.s 18
+            //stloc.s 7
             //<-- endFind
+            //This is the multiplication before the .ToString("0.0") + Translate when setting speedText.Text
             matcher.MatchForward(
                 true,
-                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 18),
-                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 19),
+                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 7),
+                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 8),
                 new CodeMatch(OpCodes.Mul),
-                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 18)
+                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 7)
             );
 
             ModLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
@@ -165,9 +183,9 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //stloc.s baseSpeedValue //use that as calculation base
 
             //ldloc.s baseSpeedValue, label noLiveData
-            //ldloca.s 0 //AssemblerComponent local var
+            //ldloc.0 //AssemblerComponent local var
             //ldfld int32[] AssemblerComponent::productCounts
-            //ldloca.s 0 //AssemblerComponent local var
+            //ldloc.0 //AssemblerComponent local var
             //ldfld int32[] AssemblerComponent::requireCounts
             //call update
             //<-- endInsert
@@ -175,15 +193,15 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 new CodeInstruction(OpCodes.Ldsfld, typeof(AssemblerSpeedUIMod).GetField("configShowLiveSpeed")), //Load config option
                 new CodeInstruction(OpCodes.Callvirt, typeof(ConfigEntry<bool>).GetProperty("Value").GetGetMethod()), //load value of config option
                 new CodeInstruction(OpCodes.Brfalse, noLiveData), //branch the speed loading (labelledInstruction) if setting is false
-                new CodeInstruction(OpCodes.Ldloc_S, (byte)18),
+                new CodeInstruction(OpCodes.Ldloc_S, (byte)7), //Load the multiplied speed value the game uses (see last match)
                 new CodeInstruction(OpCodes.Stloc_S, baseSpeedValue),
 
                 labelledInstruction, //Load base speed on stack
-                new CodeInstruction(OpCodes.Ldloca_S, (byte)0),
+                new CodeInstruction(OpCodes.Ldloc_0),
                 new CodeInstruction(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("productCounts")), //load product counts array on stack
-                new CodeInstruction(OpCodes.Ldloca_S, (byte)0),
+                new CodeInstruction(OpCodes.Ldloc_0),
                 new CodeInstruction(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("requireCounts")), //load require counts array on stack
-                new CodeInstruction(OpCodes.Call, typeof(AssemblerSpeedUIMod).GetMethod("UpdateSpeedLabels"))
+                new CodeInstruction(OpCodes.Call, typeof(AssemblerSpeedUIMod).GetMethod("UpdateSpeedLabels")) //UpdateSpeedLabels(baseSpeed, productCounts[], requireCounts[])
             );
 
             return matcher.InstructionEnumeration();
