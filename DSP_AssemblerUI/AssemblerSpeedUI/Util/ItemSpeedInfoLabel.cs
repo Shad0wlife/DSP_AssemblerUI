@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace DSP_AssemblerUI.AssemblerSpeedUI
+namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
 {
     internal class ItemSpeedInfoLabel
     {

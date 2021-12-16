@@ -4,16 +4,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-namespace DSP_AssemblerUI.AssemblerSpeedUI
+namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
 {
     public class AdditionalSpeedLabels
     {
         private readonly string speedTextPath;
         private const string OutputKeyBase = "assembler-speed-out-item";
         private const string InputKeyBase = "assembler-speed-in-item";
-        
-        private static readonly string[] ItemOutputKeys = { $"{OutputKeyBase}0", $"{OutputKeyBase}1", $"{OutputKeyBase}2" };
-        private static readonly string[] ItemInputKeys = { $"{InputKeyBase}0", $"{InputKeyBase}1", $"{InputKeyBase}2" };
+        private const int safetyIndexLimit = 5;
         
         private Dictionary<string, ItemSpeedInfoLabel> speedInfos = new Dictionary<string, ItemSpeedInfoLabel>();
         private int speedInfosOutCount = 0;
@@ -30,6 +28,16 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             this.setupOutputLabels = setupOutputLabels;
             this.setupInputLabels = setupInputLabels;
             this.speedTextPath = speedTextPath;
+        }
+
+        private static string ItemInputKey(int index)
+        {
+            return string.Concat(InputKeyBase, index);
+        }
+
+        private static string ItemOutputKey(int index)
+        {
+            return string.Concat(OutputKeyBase, index);
         }
 
         /// <summary>
@@ -63,14 +71,14 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         /// <param name="isInput">Whether the labels are on the input or output side of the UI</param>
         public void SetupSidedLabels(int itemCount, bool isInput)
         {
-            string[] matchingKeys = isInput ? ItemInputKeys : ItemOutputKeys;
-            int loopCap = Math.Min(itemCount, matchingKeys.Length);
+            Func<int, string> keyFunc = isInput ? (Func<int, string>)ItemInputKey : ItemOutputKey;
+            int loopCap = Math.Min(itemCount, safetyIndexLimit);
 
             for (int cnt = 0; cnt < loopCap; cnt++)
             {
-                if (!speedInfos.ContainsKey(matchingKeys[cnt]))
+                if (!speedInfos.ContainsKey(keyFunc(cnt)))
                 {
-                    AddSpeedLabel(matchingKeys[cnt], cnt, loopCap, isInput);
+                    AddSpeedLabel(keyFunc(cnt), cnt, loopCap, isInput);
                     if (isInput)
                     {
                         speedInfosInCount++;
@@ -91,14 +99,14 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 if (cnt2 < itemCount)
                 {
                     //If it is a label that should be visible, set it up
-                    PositionSpeedLabel(speedInfos[matchingKeys[cnt2]].GameObject, cnt2, loopCap, isInput);
-                    speedInfos[matchingKeys[cnt2]].GameObject.SetActive(true);
-                    speedInfos[matchingKeys[cnt2]].Value.text = "  0.0" + perMinuteString;
+                    PositionSpeedLabel(speedInfos[keyFunc(cnt2)].GameObject, cnt2, loopCap, isInput);
+                    speedInfos[keyFunc(cnt2)].GameObject.SetActive(true);
+                    speedInfos[keyFunc(cnt2)].Value.text = "  0.0" + perMinuteString;
                 }
                 else
                 {
                     //If the label exists, but the current assembler doesn't use it, set it to inactive
-                    speedInfos[matchingKeys[cnt2]].GameObject.SetActive(false);
+                    speedInfos[keyFunc(cnt2)].GameObject.SetActive(false);
                 }
             }
         }
@@ -240,18 +248,18 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             //Output
             if (setupOutputLabels)
             {
-                for (int cnt = 0; cnt < Math.Min(productCounts.Length, ItemOutputKeys.Length); cnt++)
+                for (int cnt = 0; cnt < Math.Min(productCounts.Length, safetyIndexLimit); cnt++)
                 {
-                    UpdateSpeedLabel(ItemOutputKeys[cnt], productCounts[cnt] * baseSpeed, AssemblerSpeedUIMod.configOutputSpeedsPerSecond.Value);
+                    UpdateSpeedLabel(ItemOutputKey(cnt), productCounts[cnt] * baseSpeed, AssemblerSpeedUIMod.configOutputSpeedsPerSecond.Value);
                 }
             }
 
             //Input
             if (setupInputLabels)
             {
-                for (int cnt = 0; cnt < Math.Min(requireCounts.Length, ItemInputKeys.Length); cnt++)
+                for (int cnt = 0; cnt < Math.Min(requireCounts.Length, safetyIndexLimit); cnt++)
                 {
-                    UpdateSpeedLabel(ItemInputKeys[cnt], requireCounts[cnt] * baseSpeed, AssemblerSpeedUIMod.configInputSpeedsPerSecond.Value);
+                    UpdateSpeedLabel(ItemInputKey(cnt), requireCounts[cnt] * baseSpeed, AssemblerSpeedUIMod.configInputSpeedsPerSecond.Value);
                 }
             }
         }

@@ -19,3 +19,4 @@
 - v1.1.0 Updated to also show input consumption speeds. Added configuration to enable/disable input and output speeds separately.
 - v1.2.0 Added a config option to configure whether to always show the full speed of the selected recipe or whether to show the current live speed (affected by power for example)
 - v2.0.0 Updated To current Game version (Post May/June Updates), Added Miner UI Speeds (Original idea: tyr0wl), added Option to show speed per second
+- v2.1.0 Updated to be compatible with new game version and be more resistant to future updates. Restructured Project files and code.

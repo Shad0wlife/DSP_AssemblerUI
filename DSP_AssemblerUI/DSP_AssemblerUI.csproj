@@ -69,13 +69,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblerSpeedUI\AdditionalSpeedLabels.cs" />
+    <Compile Include="AssemblerSpeedUI\Util\AdditionalSpeedLabels.cs" />
     <Compile Include="AssemblerSpeedUI\AssemblerSpeedUIMod.cs" />
     <Compile Include="AssemblerSpeedUI\Constants.cs" />
-    <Compile Include="AssemblerSpeedUI\ItemSpeedInfoLabel.cs" />
+    <Compile Include="AssemblerSpeedUI\Util\ItemSpeedInfoLabel.cs" />
     <Compile Include="AssemblerSpeedUI\ModInfo.cs" />
     <Compile Include="AssemblerSpeedUI\ModLogger.cs" />
-    <Compile Include="AssemblerSpeedUI\UiMinerWindowPatch.cs" />
+    <Compile Include="AssemblerSpeedUI\Patchers\UiAssemblerWindowPatch.cs" />
+    <Compile Include="AssemblerSpeedUI\Patchers\UiMinerWindowPatch.cs" />
+    <Compile Include="AssemblerSpeedUI\Util\FieldIndexFinder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

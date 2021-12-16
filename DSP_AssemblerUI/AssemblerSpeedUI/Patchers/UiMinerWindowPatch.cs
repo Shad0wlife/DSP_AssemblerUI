@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
+using DSP_AssemblerUI.AssemblerSpeedUI.Util;
 using HarmonyLib;
 
-namespace DSP_AssemblerUI.AssemblerSpeedUI
+namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
 {
-    public class UiMinerWindowPatch
+    public static class UiMinerWindowPatch
     {
         internal static AdditionalSpeedLabels additionalSpeedLabels;
 
@@ -32,22 +33,36 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             Label noLiveData = codeGen.DefineLabel();
             Label loadForDisplay = codeGen.DefineLabel();
 
+            int divisor60, speedvalue, outputstringFactor;
+
+            var searchResult = FieldIndexFinder.FindRelevantFieldIndices(instructions);
+            if (searchResult.HasValue)
+            {
+                (divisor60, speedvalue, outputstringFactor) = searchResult.Value;
+                AssemblerSpeedUIMod.ModLogger.DebugLog($"[UIMinerWindow] Found indices {divisor60}, {speedvalue}, {outputstringFactor}");
+            }
+            else
+            {
+                AssemblerSpeedUIMod.ModLogger.ErrorLog("[UIMinerWindow] Could not find the desired fields for patching the update logic.");
+                return instructions;
+            }
+
             AssemblerSpeedUIMod.ModLogger.DebugLog("Miner UiTextTranspiler started!");
             CodeMatcher matcher = new CodeMatcher(instructions);
             AssemblerSpeedUIMod.ModLogger.DebugLog($"Miner UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
 
             //find -->
             //ldc.r4 60
-            //ldloc.s 9
+            //ldloc.s *divisor60*
             //div
-            //stloc.s 10
+            //stloc.s *speedvalue*
             //<-- endFind
             matcher.MatchForward(
                 true,
                 new CodeMatch(i => i.opcode == OpCodes.Ldc_R4 && i.OperandIs(60f)),
-                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 9),
+                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == divisor60),
                 new CodeMatch(OpCodes.Div),
-                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 10)
+                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == speedvalue)
             );
             matcher.Advance(1); //move from last match to next element
 
@@ -62,7 +77,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 new CodeInstruction(OpCodes.Call, typeof(GameMain).GetProperty("history").GetGetMethod()), //get Upgrade data from Game Data
                 new CodeInstruction(OpCodes.Ldfld, typeof(GameHistoryData).GetField("miningSpeedScale")), //get Mining speed multiplier (is float already!)
                 new CodeInstruction(OpCodes.Mul), //multiply with miningSpeedScale
-                new CodeInstruction(OpCodes.Ldloc_S, (byte)10),
+                new CodeInstruction(OpCodes.Ldloc_S, (byte)speedvalue),
                 new CodeInstruction(OpCodes.Mul), //multiply base speed with factor
 
                 new CodeInstruction(OpCodes.Stloc_S, baseSpeedValue), //store base speed
@@ -103,18 +118,18 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             );
 
             //find -->
-            //ldloc.s 10
-            //ldloc.s 11
+            //ldloc.s *speedvalue*
+            //ldloc.s *outputstringFactor*
             //mul
-            //stloc.s 10
+            //stloc.s *speedvalue*
             //<-- endFind
             //This is the multiplication before the .ToString("0.0") + Translate when setting speedText.Text
             matcher.MatchForward(
                 true,
-                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 10),
-                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 11),
+                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == speedvalue),
+                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == outputstringFactor),
                 new CodeMatch(OpCodes.Mul),
-                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == 10)
+                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == speedvalue)
             );
 
             //Create code instruction with target label for Brfalse
@@ -130,7 +145,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
                 new CodeInstruction(OpCodes.Ldsfld, typeof(AssemblerSpeedUIMod).GetField("configShowMinerLiveSpeed")), //Load config option
                 new CodeInstruction(OpCodes.Callvirt, typeof(ConfigEntry<bool>).GetProperty("Value").GetGetMethod()), //load value of config option
                 new CodeInstruction(OpCodes.Brfalse, noLiveData), //branch the speed saving to (labelledInstruction) if above config setting is true, so no power data gets cleaned
-                new CodeInstruction(OpCodes.Ldloc_S, (byte)10),
+                new CodeInstruction(OpCodes.Ldloc_S, (byte)speedvalue),
                 new CodeInstruction(OpCodes.Stloc_S, baseSpeedValue),
                 new CodeInstruction(OpCodes.Br, loadForDisplay),
                 targetInstructionNoLiveData,
