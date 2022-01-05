@@ -30,10 +30,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
             SetupLabels(__instance);
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIAssemblerWindow), "OnRecipePickerReturn")]
-        public static void OnRecipePickerReturnPostfix(UIAssemblerWindow __instance)
+        [HarmonyPostfix, HarmonyPatch(typeof(AssemblerComponent), "SetRecipe")]
+        public static void SetRecipePostfix(AssemblerComponent __instance)
         {
-            SetupLabels(__instance);
+            if(UIRoot.instance.uiGame.assemblerWindow.active && UIRoot.instance.uiGame.assemblerWindow.assemblerId == __instance.id)
+            {
+                SetupLabels(UIRoot.instance.uiGame.assemblerWindow);
+            }
         }
 
         [HarmonyTranspiler, HarmonyPatch(typeof(UIAssemblerWindow), "_OnUpdate")]
