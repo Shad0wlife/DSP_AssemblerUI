@@ -21,3 +21,4 @@
 - v2.0.0 Updated To current Game version (Post May/June Updates), Added Miner UI Speeds (Original idea: tyr0wl), added Option to show speed per second
 - v2.1.0 Updated to be compatible with new game version and be more resistant to future updates. Restructured Project files and code.
 - v2.2.0 Updated to avoid a rare error when pasting recipes under specific circumstances. Should also ensure more compatibility with Nebula when another player changes the recipe of an open Assembler Window.
+- v2.2.1 Updated for compatibility with the Mecha Customization Update due to the changes added to production buffs.

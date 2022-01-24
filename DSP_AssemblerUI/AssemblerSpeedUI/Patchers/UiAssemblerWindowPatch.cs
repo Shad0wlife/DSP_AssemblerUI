@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using DSP_AssemblerUI.AssemblerSpeedUI.Util;
@@ -49,13 +50,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
             //define label we later use for a branching instruction. label location is set separately
             Label noLiveData = codeGen.DefineLabel();
 
-            int divisor60, speedvalue, outputstringFactor;
+            int divisor60, speedvalue;
 
-            var searchResult = FieldIndexFinder.FindRelevantFieldIndices(instructions);
+            var searchResult = FieldIndexFinder.FindRelevantFieldIndicesUIAssemblerWindow(instructions);
             if (searchResult.HasValue)
             {
-                (divisor60, speedvalue, outputstringFactor) = searchResult.Value;
-                AssemblerSpeedUIMod.ModLogger.DebugLog($"[UIAssemblerWindow] Found indices {divisor60}, {speedvalue}, {outputstringFactor}");
+                (divisor60, speedvalue) = searchResult.Value;
+                AssemblerSpeedUIMod.ModLogger.DebugLog($"[UIAssemblerWindow] Found indices {divisor60}, {speedvalue}");
             }
             else
             {
@@ -63,11 +64,9 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
                 return instructions;
             }
 
-            AssemblerSpeedUIMod.ModLogger.DebugLog("UiTextTranspiler started!");
+            AssemblerSpeedUIMod.ModLogger.DebugLog("UIAssemblerWindowTranspiler started!");
             CodeMatcher matcher = new CodeMatcher(instructions);
-            AssemblerSpeedUIMod.ModLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
-
-
+            AssemblerSpeedUIMod.ModLogger.DebugLog($"UIAssemblerWindowTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
 
             //find -->
             //ldc.r4 60
@@ -76,13 +75,14 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
             //stloc.s *speedvalue*
             //<-- endFind
             matcher.MatchForward(
-                true,
+                true, //Instruction pointer on last instruction after match
                 new CodeMatch(i => i.opcode == OpCodes.Ldc_R4 && i.OperandIs(60f)),
                 new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == divisor60),
                 new CodeMatch(OpCodes.Div),
                 new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == speedvalue)
             );
             matcher.Advance(1); //move from last match to next element
+            AssemblerSpeedUIMod.ModLogger.DebugLog($"UIAssemblerWindowTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
 
             //insert-->
             //ldloc.s *speedvalue*
@@ -99,7 +99,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
             matcher.InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldloc_S, (byte)speedvalue), //Load base speed without power
                 new CodeInstruction(OpCodes.Ldloc_0),
-                new CodeInstruction(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("speed")),
+                new CodeInstruction(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("speedOverride")),
                 new CodeInstruction(OpCodes.Conv_R4),
                 new CodeInstruction(OpCodes.Ldc_R4, 0.0001f),
                 new CodeInstruction(OpCodes.Mul), //scale device speed to usable factor (0.0001 * speed)
@@ -107,27 +107,34 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
                 new CodeInstruction(OpCodes.Stloc_S, baseSpeedValue) //load value of config option
             );
 
+            AssemblerSpeedUIMod.ModLogger.DebugLog($"UIAssemblerWindowTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+
             //find -->
-            //ldloc.s *speedvalue*
-            //ldloc.s *outputstringFactor*
+            //br.s somelabel
+            //ldc.r4 0.0f
             //mul
             //stloc.s *speedvalue*
-            //<-- endFind
             //This is the multiplication before the .ToString("0.0") + Translate when setting speedText.Text
-            matcher.MatchForward(
-                true,
-                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == speedvalue),
-                new CodeMatch(i => i.opcode == OpCodes.Ldloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == outputstringFactor),
-                new CodeMatch(OpCodes.Mul),
-                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == speedvalue)
-            );
+            //ldarg.0
+            //ldfld UIAssemblerWindow::speedText
+            //<-- endFind
 
-            AssemblerSpeedUIMod.ModLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
-            matcher.Advance(1); //move from last match to next element
+            matcher.MatchForward(
+                false, //Instruction pointer on first instruction after match
+                new CodeMatch(OpCodes.Mul),
+                new CodeMatch(i => i.opcode == OpCodes.Stloc_S && i.operand is LocalBuilder lb && lb.LocalIndex == speedvalue),
+                new CodeMatch(i => i.opcode == OpCodes.Ldarg_0),
+                new CodeMatch(i => i.opcode == OpCodes.Ldfld && i.operand is FieldInfo fi && fi.Name == typeof(UIAssemblerWindow).GetField("speedText").Name)
+            );
+            AssemblerSpeedUIMod.ModLogger.DebugLog($"UIAssemblerWindowTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+
+            matcher.Advance(2); //advance to next instruction after stloc_s *speedvalue*
+
+            AssemblerSpeedUIMod.ModLogger.DebugLog($"UIAssemblerWindowTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
 
             //Create code instruction with target label for Brfalse
-            CodeInstruction labelledInstruction = new CodeInstruction(OpCodes.Ldloc_S, baseSpeedValue);
-            labelledInstruction.labels.Add(noLiveData);
+            CodeInstruction labelledInstructionNoLiveData = new CodeInstruction(OpCodes.Ldloc_S, baseSpeedValue);
+            labelledInstructionNoLiveData.labels.Add(noLiveData);
 
             //insert-->
             //ldsfld ConfigEntry<bool> AssemblerSpeedUIMod.configShowLiveSpeed
@@ -150,7 +157,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
                 new CodeInstruction(OpCodes.Ldloc_S, (byte)speedvalue), //Load the multiplied speed value the game uses (see last match)
                 new CodeInstruction(OpCodes.Stloc_S, baseSpeedValue),
 
-                labelledInstruction, //Load base speed on stack
+                labelledInstructionNoLiveData, //Load base speed on stack
                 new CodeInstruction(OpCodes.Ldloc_0),
                 new CodeInstruction(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("productCounts")), //load product counts array on stack
                 new CodeInstruction(OpCodes.Ldloc_0),
@@ -158,7 +165,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
                 new CodeInstruction(OpCodes.Call, typeof(UiAssemblerWindowPatch).GetMethod("UpdateSpeedLabels")) //UpdateSpeedLabels(baseSpeed, productCounts[], requireCounts[])
             );
 
-            AssemblerSpeedUIMod.ModLogger.DebugLog($"UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            AssemblerSpeedUIMod.ModLogger.DebugLog($"UIAssemblerWindowTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
 
             return matcher.InstructionEnumeration();
         }

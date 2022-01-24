@@ -35,7 +35,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
 
             int divisor60, speedvalue, outputstringFactor;
 
-            var searchResult = FieldIndexFinder.FindRelevantFieldIndices(instructions);
+            var searchResult = FieldIndexFinder.FindRelevantFieldIndicesUIMinerWindow(instructions);
             if (searchResult.HasValue)
             {
                 (divisor60, speedvalue, outputstringFactor) = searchResult.Value;
