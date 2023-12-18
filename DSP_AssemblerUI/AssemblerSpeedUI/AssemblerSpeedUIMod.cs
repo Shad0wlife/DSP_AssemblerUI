@@ -19,6 +19,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
         public static ConfigEntry<bool> configInputSpeedsPerSecond;
         public static ConfigEntry<bool> configOutputSpeedsPerSecond;
         public static ConfigEntry<bool> configShowLiveSpeed;
+        public static ConfigEntry<uint> configShownDecimalPlaces;
 
         public static ConfigEntry<bool> configShowMinerSpeed;
         public static ConfigEntry<bool> configShowMinerLiveSpeed;
@@ -38,6 +39,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI
             configInputSpeedsPerSecond = Config.Bind("General", "EnableInputSpeedInfoPerSecond", false, "Sets the input speeds shown in Assemblers to items/s (default: items/min).");
 
             configShowLiveSpeed = Config.Bind("General", "ShowLiveSpeedInfo", false, "True: shows current speed of production building. False: shows regular recipe speed of production building.");
+
+            configShownDecimalPlaces = Config.Bind("General", "NumberOfDecimalsShown", (uint)1,
+                new ConfigDescription(
+                    $"Sets the number of decimal places shown for speed values. Value must be in range [{Constants.MIN_DECIMAL_PLACES},{Constants.MAX_DECIMAL_PLACES}].",
+                    new AcceptableValueRange<uint>(Constants.MIN_DECIMAL_PLACES, Constants.MAX_DECIMAL_PLACES)
+                )
+            );
 
             configShowMinerSpeed = Config.Bind("Miner", "EnableMinerSpeedInfo", true, "Enables the speed information below the output area in the Miner Window.");
             configShowMinerLiveSpeed = Config.Bind("Miner", "ShowMinerLiveSpeedInfo", false, "True: shows current speed of production building. False: shows regular recipe speed of production building.");

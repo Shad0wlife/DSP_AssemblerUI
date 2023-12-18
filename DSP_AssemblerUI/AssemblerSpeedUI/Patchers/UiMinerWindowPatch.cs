@@ -159,6 +159,10 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
             return matcher.Instructions();
         }
 
+        /// <summary>
+        /// This has no call shown in visual studio, but is manually called by the transpiler with a CALL-Operation.
+        /// </summary>
+        /// <param name="baseSpeed"></param>
         public static void UpdateSpeedLabel(float baseSpeed)
         {
             additionalSpeedLabels.UpdateSpeedLabel($"assembler-speed-out-item0", baseSpeed, AssemblerSpeedUIMod.configMinerSpeedsPerSecond.Value);

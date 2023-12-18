@@ -11,7 +11,7 @@
  You can also decide whether you want to display the speed with which the device currently creates or consumes resources, 
  or if you want to display the recipe speed for the device without impact of power and full or empty slots.
  
- Speeds can also be configured to show in an items/s scale instead of items/min.
+ Speeds can also be configured to show in an items/s scale instead of items/min, and can be configured to use 0 to 3 decimal places.
 
 
 ## Version History
@@ -22,3 +22,4 @@
 - v2.1.0 Updated to be compatible with new game version and be more resistant to future updates. Restructured Project files and code.
 - v2.2.0 Updated to avoid a rare error when pasting recipes under specific circumstances. Should also ensure more compatibility with Nebula when another player changes the recipe of an open Assembler Window.
 - v2.2.1 Updated for compatibility with the Mecha Customization Update due to the changes added to production buffs.
+- v2.3.0 Updated to allow for configurable decimal places and adaptive text positioning. The release for this version will be built against the Dark Fog Update. It should also be possible to manually build it against older versions of the game, if needed.

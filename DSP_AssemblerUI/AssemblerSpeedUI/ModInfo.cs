@@ -5,8 +5,8 @@
         public const string ModID = "dsp.assemblerUI.speedMod";
         public const string ModName = "Assembler UI Speed Info Mod";
         public const string majorVersion = "2";
-        public const string minorVersion = "2";
-        public const string hotfixVersion = "1";
+        public const string minorVersion = "3";
+        public const string hotfixVersion = "0";
         public const string buildVersion = "0";
         public const string VersionString = majorVersion + "." + minorVersion + "." + hotfixVersion + "." + buildVersion;
     }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
@@ -11,6 +12,12 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
     {
         internal static AdditionalSpeedLabels additionalSpeedLabels;
 
+        /// <summary>
+        /// This has no call shown in visual studio, but is manually called by the transpiler with a CALL-Operation.
+        /// </summary>
+        /// <param name="baseSpeed"></param>
+        /// <param name="productCounts"></param>
+        /// <param name="requireCounts"></param>
         public static void UpdateSpeedLabels(float baseSpeed, int[] productCounts, int[] requireCounts)
         {
             additionalSpeedLabels.UpdateSpeedLabels(baseSpeed, productCounts, requireCounts);
@@ -162,7 +169,10 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
                 new CodeInstruction(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("productCounts")), //load product counts array on stack
                 new CodeInstruction(OpCodes.Ldloc_0),
                 new CodeInstruction(OpCodes.Ldfld, typeof(AssemblerComponent).GetField("requireCounts")), //load require counts array on stack
-                new CodeInstruction(OpCodes.Call, typeof(UiAssemblerWindowPatch).GetMethod("UpdateSpeedLabels")) //UpdateSpeedLabels(baseSpeed, productCounts[], requireCounts[])
+                new CodeInstruction(OpCodes.Call, typeof(UiAssemblerWindowPatch).GetMethod(
+                    "UpdateSpeedLabels", 
+                    new Type[] { typeof(float), typeof(int[]), typeof(int[]) })
+                ) //UpdateSpeedLabels(baseSpeed, productCounts[], requireCounts[])
             );
 
             AssemblerSpeedUIMod.ModLogger.DebugLog($"UIAssemblerWindowTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");

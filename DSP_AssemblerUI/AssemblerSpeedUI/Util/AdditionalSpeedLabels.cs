@@ -18,9 +18,24 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
         private int speedInfosInCount = 0;
         private Vector3? vanillaSpeedPos = null;
 
+        private int currentOutputs = 1;
+        private int currentInputs = 1;
+
         private ModLogger modLogger;
         private bool setupOutputLabels;
         private bool setupInputLabels;
+
+        /// <summary>
+        /// The actual formatstring. Gets the value directly to avoid the extra call to ShownDecimals' getter.
+        /// No idea if that would even affect anything, but still.
+        /// </summary>
+        private string DecimalFormatString
+        {
+            get
+            {
+                return "F" + AssemblerSpeedUIMod.configShownDecimalPlaces.Value;
+            }
+        }
         
         public AdditionalSpeedLabels(ModLogger modLogger, bool setupOutputLabels, bool setupInputLabels, string speedTextPath)
         {
@@ -28,6 +43,19 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
             this.setupOutputLabels = setupOutputLabels;
             this.setupInputLabels = setupInputLabels;
             this.speedTextPath = speedTextPath;
+
+            //Devices without inputs will be created with 0 current inputs, just in case
+            this.currentInputs = setupInputLabels ? 1 : 0;
+        }
+
+        /// <summary>
+        /// Pad The numbers with 2 leading spaces so that there is spacing between values.
+        /// </summary>
+        /// <param name="f">The value to be formatted.</param>
+        /// <returns>The formatted string.</returns>
+        private string MakeFormattedPaddedLabelString(float f)
+        {
+            return "  " + f.ToString(DecimalFormatString);
         }
 
         private static string ItemInputKey(int index)
@@ -74,6 +102,15 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
             Func<int, string> keyFunc = isInput ? (Func<int, string>)ItemInputKey : ItemOutputKey;
             int loopCap = Math.Min(itemCount, safetyIndexLimit);
 
+            if (isInput)
+            {
+                currentInputs = loopCap;
+            }
+            else
+            {
+                currentOutputs = loopCap;
+            }
+
             for (int cnt = 0; cnt < loopCap; cnt++)
             {
                 if (!speedInfos.ContainsKey(keyFunc(cnt)))
@@ -99,9 +136,9 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
                 if (cnt2 < itemCount)
                 {
                     //If it is a label that should be visible, set it up
-                    PositionSpeedLabel(speedInfos[keyFunc(cnt2)].GameObject, cnt2, loopCap, isInput);
+                    speedInfos[keyFunc(cnt2)].Value.text = MakeFormattedPaddedLabelString(0f) + perMinuteString;
                     speedInfos[keyFunc(cnt2)].GameObject.SetActive(true);
-                    speedInfos[keyFunc(cnt2)].Value.text = "  0.0" + perMinuteString;
+                    TryStartPositioningOnLabel(speedInfos[keyFunc(cnt2)], loopCap);
                 }
                 else
                 {
@@ -128,9 +165,16 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
 
             GameObject gameObject = null;
             var originalDetailLabelText = originalDetailLabel.GetComponent<Text>();
+            modLogger.DebugLog($"originalDetailLabelText was:{originalDetailLabelText.text}");
 
+            //Object.Instantiate creates a copy of an original object
             gameObject = Object.Instantiate(originalDetailLabel, originalDetailLabel.transform.position, Quaternion.identity);
             Object.Destroy(gameObject.GetComponentInChildren<Localizer>());
+
+            //ContentSizeFitter to somewhat accurately measure text label size
+            ContentSizeFitter fitter = gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             gameObject.name = id;
             gameObject.transform.SetParent(originalDetailLabel.transform.parent);
@@ -144,21 +188,19 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
             }
 
             gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
-            PositionSpeedLabel(gameObject, num, ofNum, input);
             gameObject.transform.right = originalDetailLabel.transform.right;
-
-            //Input area is smaller, decrease font size
-            if (input || ofNum > 1)
-            {
-                value.fontSize -= 2;
-            }
 
             ItemSpeedInfoLabel newItemSpeedInfo = new ItemSpeedInfoLabel()
             {
                 GameObject = gameObject,
-                Value = value
+                Value = value,
+                Index = num,
+                IsInput = input,
+                Fitter = fitter
             };
             speedInfos.Add(id, newItemSpeedInfo);
+
+            TryStartPositioningOnLabel(newItemSpeedInfo, ofNum);
         }
 
         /// <summary>
@@ -168,14 +210,50 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
         /// <param name="num">Index of the label (0-based)</param>
         /// <param name="ofNum">Count of total labels (max index + 1)</param>
         /// <param name="input">Whether the label is on the input or output side.</param>
-        private void PositionSpeedLabel(GameObject gameObject, int num, int ofNum, bool input)
+        private System.Collections.IEnumerator PositionSpeedLabel(ItemSpeedInfoLabel labelData, int ofNum)
         {
+            modLogger.DebugLog($"Working on label {labelData.GameObject.name} which is input? {labelData.IsInput}");
+            modLogger.DebugLog($"OgPosition:{labelData.Fitter.transform.localPosition}");
 
-            modLogger.DebugLog($"OgPosition:{gameObject.transform.localPosition}");
-            Vector3 shiftVector = GetPosShift(num, ofNum, input);
-            modLogger.DebugLog($"ShiftedBy:{shiftVector}");
+            RectTransform targetTransform = (RectTransform)labelData.Fitter.transform;
+            float sizeLimit = labelData.IsInput ? Constants.INPUT_MAXWIDTH : Constants.OUTPUT_MAXWIDTH;
 
-            gameObject.transform.localPosition = vanillaSpeedPos.Value + shiftVector;
+            yield return null;
+
+            //Increase somewhat fast up to 12
+            while(targetTransform.rect.width < (sizeLimit - 5) && labelData.Value.fontSize < 12)
+            {
+                labelData.Value.fontSize = Math.Min(12, labelData.Value.fontSize + 4);
+                yield return null;
+            }
+
+            //Approach size from above
+            while(targetTransform.rect.width > sizeLimit)
+            {
+                labelData.Value.fontSize -= 1;
+                yield return null;
+            }
+
+            Vector3 shiftVector = GetPos(labelData.Index, ofNum, labelData.IsInput, vanillaSpeedPos.Value.z, targetTransform.rect.width);
+
+            modLogger.DebugLog($"Shifted to:{shiftVector} from {targetTransform.localPosition}");
+
+            targetTransform.localPosition = shiftVector;
+        }
+
+        /// <summary>
+        /// Safely call the coroutine on the labels.
+        /// This is done by checking if the corresponding GameObject is acually active before starting the coroutine.
+        /// </summary>
+        /// <param name="labelData">The label to position.</param>
+        /// <param name="ofNum">The number of given labels.</param>
+        private void TryStartPositioningOnLabel(ItemSpeedInfoLabel labelData, int ofNum)
+        {
+            if (labelData.GameObject.activeInHierarchy)
+            {
+                modLogger.DebugLog($"Starting coroutine on {labelData.GameObject.name} since it is active and all its parents are too.");
+                labelData.Fitter.StartCoroutine(PositionSpeedLabel(labelData, ofNum));
+            }
         }
 
         /// <summary>
@@ -185,12 +263,13 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
         /// <param name="ofNum">Count of total labels (max index + 1)</param>
         /// <param name="input">Whether the label is on the input or output side.</param>
         /// <returns>The Vector3 by which the label shall be shifted</returns>
-        private static Vector3 GetPosShift(int num, int ofNum, bool input)
+        private static Vector3 GetPos(int num, int ofNum, bool input, float z, float width)
         {
-            float yShift = input ? 25f : -50f;
-            float xShift = GetXShift(num, ofNum, input);
 
-            return new Vector3(xShift, yShift, 0f);
+            float yPos = input ? Constants.INPUT_YPOS : Constants.OUTPUT_YPOS;
+            float xPos = GetXShift(num, ofNum, input, width);
+
+            return new Vector3(xPos, yPos, z);
         }
 
         /// <summary>
@@ -200,22 +279,19 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
         /// <param name="ofNum">Count of total labels (max index + 1)</param>
         /// <param name="input">Whether the label is on the input or output side.</param>
         /// <returns>The x-Shift of the label</returns>
-        private static float GetXShift(int num, int ofNum, bool input)
+        private static float GetXShift(int num, int ofNum, bool input, float width)
         {
-            //based on:
-            //float[][] xOutputLookup = new float[][] { new float[] { -60f }, new float[] { -125f, -60f }, new float[] { -190f, -125f, -60f } };
-            //float[][] xInputLookup = new float[][] { new float[] { 74 }, new float[] { 74f, 125f }, new float[] { 74f, 125f, 176f } };
             if (input)
             {
-                float baseX = 74f;
-                float itemStep = 49f;
-                return baseX + num * itemStep;
+                float baseX = Constants.INPUT_FIRST_X_OFFSET;
+                float itemStep = Constants.INPUT_X_ITEMSIZE;
+                return baseX - width/2 + num * itemStep;
             }
             else
             {
-                float baseX = -60f;
-                float itemStep = -65f;
-                return baseX + (ofNum - 1 - num) * itemStep;
+                float baseX = Constants.OUTPUT_FIRST_X_OFFSET;
+                float itemStep = -Constants.OUTPUT_X_ITEMSIZE;
+                return baseX - width/2 + (ofNum - 1 - num) * itemStep;
             }
         }
 
@@ -232,14 +308,20 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Util
             string speedText;
             if (perSecond)
             {
-                speedText = (value/60f).ToString("0.0").PadLeft(5) + perSecondString;
+                speedText = MakeFormattedPaddedLabelString(value/60f) + perSecondString;
             }
             else
             {
-                speedText = value.ToString("0.0").PadLeft(5) + perMinuteString;
+                speedText = MakeFormattedPaddedLabelString(value) + perMinuteString;
             }
 
-            speedInfos[id].Value.text = speedText;
+            bool labelChange = speedText != speedInfos[id].Value.text;
+
+            if (labelChange)
+            {
+                speedInfos[id].Value.text = speedText;
+                TryStartPositioningOnLabel(speedInfos[id], speedInfos[id].IsInput ? currentInputs : currentOutputs);
+            }
         }
         
         public void UpdateSpeedLabels(float baseSpeed, int[] productCounts, int[] requireCounts)
