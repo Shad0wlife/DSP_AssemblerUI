@@ -23,3 +23,4 @@
 - v2.2.0 Updated to avoid a rare error when pasting recipes under specific circumstances. Should also ensure more compatibility with Nebula when another player changes the recipe of an open Assembler Window.
 - v2.2.1 Updated for compatibility with the Mecha Customization Update due to the changes added to production buffs.
 - v2.3.0 Updated to allow for configurable decimal places and adaptive text positioning. The release for this version will be built against the Dark Fog Update. It should also be possible to manually build it against older versions of the game, if needed.
+- v3.0.0 Updated for compatibility with DSP v0.10.34.28326, code cleanup - Many Thanks to @AZV-EU. Starting with version 3.0.0 this mod is INCOMPATIBLE with older game versions!
