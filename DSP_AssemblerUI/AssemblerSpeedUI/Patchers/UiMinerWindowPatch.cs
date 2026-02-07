@@ -8,9 +8,9 @@ using HarmonyLib;
 
 namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
 {
-    public static class UiMinerWindowPatch
+    public static class UIMinerWindowPatch
     {
-        internal static AdditionalSpeedLabels additionalSpeedLabels;
+        internal static AdditionalSpeedLabels additionalSpeedLabels = null!;
 
         [HarmonyPostfix, HarmonyPatch(typeof(UIMinerWindow), "OnMinerIdChange")]
         public static void OnMinerIdChangePostfix()
@@ -39,17 +39,17 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
             if (searchResult.HasValue)
             {
                 (divisor60, speedvalue, outputstringFactor) = searchResult.Value;
-                AssemblerSpeedUIMod.ModLogger.DebugLog($"[UIMinerWindow] Found indices {divisor60}, {speedvalue}, {outputstringFactor}");
+                AssemblerSpeedUIMod.LogDebug($"[UIMinerWindow] Found indices {divisor60}, {speedvalue}, {outputstringFactor}");
             }
             else
             {
-                AssemblerSpeedUIMod.ModLogger.ErrorLog("[UIMinerWindow] Could not find the desired fields for patching the update logic.");
+                AssemblerSpeedUIMod.Logger.LogError("[UIMinerWindow] Could not find the desired fields for patching the update logic.");
                 return instructions;
             }
 
-            AssemblerSpeedUIMod.ModLogger.DebugLog("Miner UiTextTranspiler started!");
-            CodeMatcher matcher = new CodeMatcher(instructions);
-            AssemblerSpeedUIMod.ModLogger.DebugLog($"Miner UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
+            AssemblerSpeedUIMod.LogDebug("Miner UiTextTranspiler started!");
+            CodeMatcher matcher = new(instructions);
+            AssemblerSpeedUIMod.LogDebug($"Miner UiTextTranspiler Matcher Codes Count: {matcher.Instructions().Count}, Matcher Pos: {matcher.Pos}!");
 
             //find -->
             //ldc.r4 60
@@ -133,11 +133,11 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
             );
 
             //Create code instruction with target label for Brfalse
-            CodeInstruction targetInstructionNoLiveData = new CodeInstruction(OpCodes.Ldloc_S, baseSpeedValue);
+            CodeInstruction targetInstructionNoLiveData = new(OpCodes.Ldloc_S, baseSpeedValue);
             targetInstructionNoLiveData.labels.Add(noLiveData);
 
             //Create code instruction with target label for Br
-            CodeInstruction targetInstructionLoadForDisplay = new CodeInstruction(OpCodes.Ldloc_S, baseSpeedValue);
+            CodeInstruction targetInstructionLoadForDisplay = new(OpCodes.Ldloc_S, baseSpeedValue);
             targetInstructionLoadForDisplay.labels.Add(loadForDisplay);
 
 
@@ -153,7 +153,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
                 new CodeInstruction(OpCodes.Mul),
                 new CodeInstruction(OpCodes.Stloc_S, baseSpeedValue),
                 targetInstructionLoadForDisplay, //load base speed
-                new CodeInstruction(OpCodes.Call, typeof(UiMinerWindowPatch).GetMethod("UpdateSpeedLabel", new Type[] { typeof(float) })) //UpdateSpeedLabel(baseSpeed)
+                new CodeInstruction(OpCodes.Call, typeof(UIMinerWindowPatch).GetMethod("UpdateSpeedLabel", [typeof(float)])) //UpdateSpeedLabel(baseSpeed)
             );
 
             return matcher.Instructions();
