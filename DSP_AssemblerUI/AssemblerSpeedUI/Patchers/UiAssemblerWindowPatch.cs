@@ -149,9 +149,7 @@ namespace DSP_AssemblerUI.AssemblerSpeedUI.Patchers
 
 			//ldloc.s baseSpeedValue, label noLiveData
 			//ldloc.0 //AssemblerComponent local var
-			//ldfld int32[] AssemblerComponent::productCounts
-			//ldloc.0 //AssemblerComponent local var
-			//ldfld int32[] AssemblerComponent::requireCounts
+			//ldfld RecipeExecuteData AssemblerComponent::recipeExecuteData
 			//call update
 			//<-- endInsert
 			matcher.InsertAndAdvance(
